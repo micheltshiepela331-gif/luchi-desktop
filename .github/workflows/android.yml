@@ -1,44 +1,32 @@
 name: Build and Deploy APK
-
 on:
   push:
-    branches:
-      - main
-
+    branches: [main]
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Récupération du code source
-        uses: actions/checkout@v4
-
-      - name: Configuration de Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Compilation de l'APK Luchi-Desktop
+      - name: Compilation APK
         run: |
           if [ -f "gradlew" ]; then
             chmod +x gradlew
             ./gradlew assembleRelease
-          else
-            echo "Aucun fichier gradlew detecte. Tentative de compilation alternative."
           fi
-
-      - name: Envoi de l'APK vers le site web
+      - name: Deployer APK
         run: |
-          git config --global user.name "Robot Luchi Desktop"
-          git config --global user.email "robot-desktop@github.com"
-          
-          git clone https://x-access-token:${{ secrets.AUTO_DEPLOY_TOKEN }}@github.com/MICHEL-2004/luchi-site-web.git site_web
-          
-          mkdir -p site_web/apks/luchi-desktop
-          
-          cp app/build/outputs/apk/release/app-release.apk site_web/apks/luchi-desktop/luchi-desktop.apk || cp app/build/outputs/apk/release/*.apk site_web/apks/luchi-desktop/
-          
-          cd site_web
-          git add .
-          git commit -m "Mise à jour automatique de l'APK : Luchi-Desktop" || echo "Rien de nouveau a committer"
+          git config --global user.name "Robot Luchi"
+          git config --global user.email "robot@luchi.com"
+          mkdir -p apks/luchi-desktop
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            cp app/build/outputs/apk/release/app-release.apk apks/luchi-desktop/luchi-desktop.apk
+          fi
+          git add apks/ || true
+          git commit -m "APK Luchi-Desktop" || echo "rien"
           git push origin main
