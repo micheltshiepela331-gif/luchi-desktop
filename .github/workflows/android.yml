@@ -1,9 +1,9 @@
-name: Automatisation APK Luchi-Desktop
+name: Build and Deploy APK
 
 on:
   push:
     branches:
-      - main # Le robot se lance dès que vous poussez des modifications sur main
+      - main
 
 jobs:
   build_and_deploy:
@@ -24,27 +24,21 @@ jobs:
             chmod +x gradlew
             ./gradlew assembleRelease
           else
-            echo "Aucun fichier gradlew détecté. Tentative de compilation alternative."
+            echo "Aucun fichier gradlew detecte. Tentative de compilation alternative."
           fi
 
       - name: Envoi de l'APK vers le site web
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.AUTO_DEPLOY_TOKEN }}
         run: |
           git config --global user.name "Robot Luchi Desktop"
           git config --global user.email "robot-desktop@github.com"
           
-          # Clonage de votre site internet
-          git clone https://x-access-token:${API_TOKEN_GITHUB}@://github.com site_web
+          git clone https://x-access-token:${{ secrets.AUTO_DEPLOY_TOKEN }}@github.com/MICHEL-2004/luchi-site-web.git site_web
           
-          # Création du sous-dossier pour cette application sur le site
           mkdir -p site_web/apks/luchi-desktop
           
-          # Copie de l'APK produit
-          cp app/build/outputs/apk/release/app-release.apk site_web/apks/luchi-desktop/luchi-desktop.apk || cp *.apk site_web/apks/luchi-desktop/luchi-desktop.apk
+          cp app/build/outputs/apk/release/app-release.apk site_web/apks/luchi-desktop/luchi-desktop.apk || cp app/build/outputs/apk/release/*.apk site_web/apks/luchi-desktop/
           
-          # Commit et push automatique vers votre site
           cd site_web
           git add .
-          git commit -m "Mise à jour automatique de l'APK : Luchi-Desktop"
+          git commit -m "Mise à jour automatique de l'APK : Luchi-Desktop" || echo "Rien de nouveau a committer"
           git push origin main
